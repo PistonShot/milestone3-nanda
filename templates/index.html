@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Milestone 3</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <form id="transform-form">
+        <label for="theta">Rotation (degrees):</label>
+        <input type="number" id="theta" name="theta" value="45"><br>
+        <label for="tx">Translation X:</label>
+        <input type="number" id="tx" name="tx" value="5"><br>
+        <label for="ty">Translation Y:</label>
+        <input type="number" id="ty" name="ty" value="-3"><br>
+        <label for="tz">Translation Z:</label>
+        <input type="number" id="tz" name="tz" value="2"><br>
+        <button type="submit">Apply Transformation</button>
+    </form>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        document.getElementById('transform-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const data = {
+                theta: parseFloat(formData.get('theta')),
+                tx: parseFloat(formData.get('tx')),
+                ty: parseFloat(formData.get('ty')),
+                tz: parseFloat(formData.get('tz'))
+            };
+
+            fetch('/transform', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(matrix => applyTransformation(matrix));
+        });
+
+        // Initialize Three.js scene
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Create a cube
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+
+        camera.position.z = 5;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Apply transformation to the cube
+        function applyTransformation(matrix) {
+            const threeMatrix = new THREE.Matrix4().fromArray(matrix.flat());
+            cube.applyMatrix4(threeMatrix);
+        }
+    </script>
+</body>
+</html>
